@@ -12,7 +12,7 @@ build:
 	./build.sh
 
 render-start:
-	unicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
+	gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
 check:
 	uv run ruff check .
