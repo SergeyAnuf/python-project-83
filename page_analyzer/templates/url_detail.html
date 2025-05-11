@@ -3,9 +3,41 @@
 <div class="container mt-4">
   <div class="mb-3">
     <h1>Сайт: {{ url[1] }}</h1>
-    <p class="text-muted">Добавлен: {{ url[2].strftime('%Y-%m-%d') }}</p>
+    <p class="text-muted">Добавлен: {{ url[2].strftime('%Y-%m-%d %H:%M') }}</p>
     <a href="{{ url_for('urls') }}" class="btn btn-primary">← Назад к списку</a>
+    <form method="post" action="{{ url_for('url_check', id=url[0]) }}" class="d-inline">
+      <button type="submit" class="btn btn-primary ms-2">Запустить проверку</button>
+    </form>
   </div>
+
+  <h2 class="mt-4">Проверки</h2>
+  <table class="table table-bordered table-hover" data-test="checks">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Код ответа</th>
+        <th>h1</th>
+        <th>title</th>
+        <th>description</th>
+        <th>Дата проверки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for check in checks %}
+        <tr>
+          <td>{{ check[0] }}</td> <!-- ID проверки -->
+          <td>{{ check[2] }}</td> <!-- status_code -->
+          <td>{{ check[3] | truncate(30) if check[3] }}</td> <!-- h1 -->
+          <td>{{ check[4] | truncate(30) if check[4] }}</td> <!-- title -->
+          <td>{{ check[5] | truncate(50) if check[5] }}</td> <!-- description -->
+          <td>{{ check[6].strftime('%Y-%m-%d %H:%M') }}</td> <!-- created_at -->
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" class="text-center">Проверок пока нет</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}
-

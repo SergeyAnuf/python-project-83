@@ -23,7 +23,17 @@ def index():
 def urls():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('SELECT id, name, created_at FROM urls ORDER BY created_at DESC;')
+    cur.execute('''
+        SELECT 
+            urls.id, 
+            urls.name, 
+            urls.created_at, 
+            MAX(url_checks.created_at) AS last_check
+        FROM urls
+        LEFT JOIN url_checks ON urls.id = url_checks.url_id
+        GROUP BY urls.id
+        ORDER BY urls.created_at DESC;
+    ''')
     urls = cur.fetchall()
     cur.close()
     conn.close()
@@ -35,11 +45,29 @@ def url_detail(id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # Получение данных URL
             cur.execute('SELECT * FROM urls WHERE id = %s', (id,))
             url = cur.fetchone()
+            if not url:
+                abort(404)
 
-        return render_template('url_detail.html', url=url) if url else abort(404)
+            # Получение списка проверок
+            cur.execute('''
+                SELECT 
+                    id, 
+                    url_id, 
+                    status_code, 
+                    h1, 
+                    title, 
+                    description, 
+                    created_at 
+                FROM url_checks
+                WHERE url_id = %s
+                ORDER BY created_at DESC
+            ''', (id,))
+            checks = cur.fetchall()
 
+        return render_template('url_detail.html', url=url, checks=checks)
     except psycopg2.Error as e:
         app.logger.error(f'Database error: {str(e)}')
         abort(500)
@@ -77,6 +105,33 @@ def add_url():
     finally:
         cur.close()
         conn.close()
+
+
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+def url_check(id):
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            # Проверка существования URL
+            cur.execute('SELECT id FROM urls WHERE id = %s', (id,))
+            if not cur.fetchone():
+                flash('Сайт не найден', 'danger')
+                return redirect(url_for('urls'))
+
+            # Создание проверки
+            cur.execute(
+                'INSERT INTO url_checks (url_id, created_at) VALUES (%s, %s)',
+                (id, datetime.now())
+            )
+            conn.commit()
+            flash('Проверка успешно запущена', 'success')
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash('Ошибка при создании проверки', 'danger')
+        app.logger.error(f'Ошибка базы данных: {e}')
+    finally:
+        conn.close()
+    return redirect(url_for('url_detail', id=id))
 
 def validate_url(url):
     if not url:
