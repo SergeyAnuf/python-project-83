@@ -1,10 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort
-from dotenv import load_dotenv
 import os
-import psycopg2
-import validators
 from datetime import datetime
 from urllib.parse import urlparse
+
+import psycopg2
+import validators
+from dotenv import load_dotenv
+from flask import (
+    Flask,
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 load_dotenv()
 
@@ -12,12 +21,15 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.template_folder = os.path.join(os.path.dirname(__file__), 'templates')
 
+
 def get_db():
     return psycopg2.connect(os.getenv('DATABASE_URL'))
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/urls', methods=['GET'])
 def urls():
@@ -73,6 +85,7 @@ def url_detail(id):
         abort(500)
     finally:
         conn.close()
+
 
 @app.route('/urls', methods=['POST'])
 def add_url():
@@ -132,6 +145,7 @@ def url_check(id):
     finally:
         conn.close()
     return redirect(url_for('url_detail', id=id))
+
 
 def validate_url(url):
     if not url:
