@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 from urllib.parse import urlparse
-
 import psycopg2
 import validators
 from dotenv import load_dotenv
