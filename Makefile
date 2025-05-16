@@ -12,10 +12,10 @@ build:
 	./build.sh
 
 render-start:
-	gunicorn -w 5 -b 0.0.0.0:8000 page_analyzer:app
+	.venv/bin/python -m gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
-check:
+lint:
 	uv run ruff check .
 
-check-fix:
+lint-fix:
 	uv run ruff check --fix .
