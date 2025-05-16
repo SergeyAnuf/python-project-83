@@ -14,8 +14,8 @@ build:
 render-start:
 	.venv/bin/python -m gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
 
-lint:
+check:
 	uv run ruff check .
 
-lint-fix:
+check-fix:
 	uv run ruff check --fix .
