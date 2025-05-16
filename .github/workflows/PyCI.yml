@@ -42,7 +42,7 @@ jobs:
           make install
       - name: Run linter
         run: #|
-          make check
+          make lint
       #- name: Test & publish code coverage
       #   # Publish code coverage on Code Climate
       #   # https://github.com/paambaati/codeclimate-action
