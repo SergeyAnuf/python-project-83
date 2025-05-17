@@ -1,12 +1,11 @@
 import os
 from datetime import datetime
 from urllib.parse import urlparse
-import requests
-from bs4 import BeautifulSoup
-from flask import session
 
 import psycopg2
+import requests
 import validators
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -15,6 +14,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 
