@@ -7,6 +7,7 @@
         <th>ID</th>
         <th>URL</th>
         <th>Последняя проверка</th>
+        <th>Код ответа</th>
         <th>Дата добавления</th>
       </tr>
     </thead>
@@ -15,7 +16,8 @@
         <tr>
           <td>{{ url[0] }}</td>
           <td><a href="{{ url_for('url_detail', id=url[0]) }}">{{ url[1] }}</a></td>
-          <td>{{ url[3].strftime('%Y-%m-%d %H:%M') if url[3] else '' }}</td>
+          <td>{{ url[3].strftime('%Y-%m-%d %H:%M') if url[3] }}</td>
+          <td>{{ url[4] if url[4] }}</td>
           <td>{{ url[2].strftime('%Y-%m-%d %H:%M') }}</td>
         </tr>
       {% endfor %}
@@ -23,3 +25,4 @@
   </table>
 </div>
 {% endblock %}
+

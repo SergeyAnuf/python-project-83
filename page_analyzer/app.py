@@ -1,6 +1,9 @@
 import os
 from datetime import datetime
 from urllib.parse import urlparse
+import requests
+from bs4 import BeautifulSoup
+from flask import session
 
 import psycopg2
 import validators
@@ -28,6 +31,10 @@ def get_db():
 
 @app.route('/')
 def index():
+    # Извлекаем и удаляем сообщение из сессии
+    message_data = session.pop('last_check_message', None)
+    if message_data:
+        flash(message_data[0], message_data[1])
     return render_template('index.html')
 
 
@@ -37,10 +44,15 @@ def urls():
     cur = conn.cursor()
     cur.execute('''
         SELECT 
-            urls.id, 
-            urls.name, 
-            urls.created_at, 
-            MAX(url_checks.created_at) AS last_check
+            urls.id,
+            urls.name,
+            urls.created_at,
+            MAX(url_checks.created_at) AS last_check,
+            (SELECT status_code 
+             FROM url_checks 
+             WHERE url_id = urls.id 
+             ORDER BY created_at DESC 
+             LIMIT 1) AS last_status
         FROM urls
         LEFT JOIN url_checks ON urls.id = url_checks.url_id
         GROUP BY urls.id
@@ -125,25 +137,67 @@ def url_check(id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # Проверка существования URL
-            cur.execute('SELECT id FROM urls WHERE id = %s', (id,))
-            if not cur.fetchone():
+            # Получаем URL из базы
+            cur.execute('SELECT id, name FROM urls WHERE id = %s', (id,))
+            url_data = cur.fetchone()
+            if not url_data:
                 flash('Сайт не найден', 'danger')
                 return redirect(url_for('urls'))
 
-            # Создание проверки
-            cur.execute(
-                'INSERT INTO url_checks (url_id, created_at) VALUES (%s, %s)',
-                (id, datetime.now())
-            )
-            conn.commit()
-            flash('Проверка успешно запущена', 'success')
+            url_id, url_name = url_data
+            try:
+                try:
+                    # Выполняем HTTP-запрос
+                    response = requests.get(url_name, timeout=10)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException:
+                    flash('Произошла ошибка при проверке', 'danger')
+                    return redirect(url_for('url_detail', id=url_id))
+
+                # Парсим HTML
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                h1 = soup.h1.text.strip() if soup.h1 else ''
+                title = soup.title.text.strip() if soup.title else ''
+                description_tag = soup.find('meta', attrs={'name': 'description'})
+                description = description_tag['content'].strip() if description_tag else ''
+
+                # Сохраняем проверку
+                cur.execute('''
+                    INSERT INTO url_checks (
+                        url_id, 
+                        status_code,
+                        h1,
+                        title,
+                        description,
+                        created_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                ''', (
+                    url_id,
+                    response.status_code,
+                    h1[:255],  # Ограничение длины как в базе
+                    title[:255],
+                    description[:255],
+                    datetime.now()
+                ))
+                conn.commit()
+                flash('Страница успешно проверена', 'success')
+                session['last_check_message'] = ('Страница успешно проверена', 'success')
+
+            except requests.exceptions.RequestException:
+                session['last_check_message'] = ('Произошла ошибка при проверке', 'danger')
+                return redirect(url_for('url_detail', id=id))
+
+            except Exception as e:
+                session['last_check_message'] = (f'Ошибка: {str(e)}', 'danger')
+
     except psycopg2.Error as e:
         conn.rollback()
-        flash('Ошибка при создании проверки', 'danger')
-        app.logger.error(f'Ошибка базы данных: {e}')
+        flash('Ошибка при сохранении проверки', 'danger')
+        app.logger.error(f'Database error: {e}')
     finally:
         conn.close()
+
     return redirect(url_for('url_detail', id=id))
 
 
