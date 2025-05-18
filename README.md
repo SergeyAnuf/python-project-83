@@ -16,9 +16,9 @@ ________________________________________________________________________________
 
 ## Installation:
 
-...
+````
 git clone git@github.com:SergeyAnuf/python-project-83.git
-...
+````
 
 ````
 cd python-project-83
@@ -34,3 +34,28 @@ uv tool install dist/*.whl
 
 ***
 
+Local start:
+
+````
+uv run gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
+````
+
+***
+
+Project run on "render.com"
+
+````
+.venv/bin/python -m gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
+````
+***
+
+Command on "render.com":
+
+build:
+````
+make build
+````
+start:
+````
+render start
+````
