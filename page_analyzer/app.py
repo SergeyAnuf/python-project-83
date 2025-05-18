@@ -145,56 +145,47 @@ def url_check(id):
                 return redirect(url_for('urls'))
 
             url_id, url_name = url_data
+
             try:
-                try:
-                    # Выполняем HTTP-запрос
-                    response = requests.get(url_name, timeout=10)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException:
-                    flash('Произошла ошибка при проверке', 'danger')
-                    return redirect(url_for('url_detail', id=url_id))
+                response = requests.get(url_name, timeout=10)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                flash('Произошла ошибка при проверке', 'danger')
+                return redirect(url_for('url_detail', id=url_id))
 
-                # Парсим HTML
-                soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-                h1 = soup.h1.text.strip() if soup.h1 else ''
-                title = soup.title.text.strip() if soup.title else ''
-                description_tag = soup.find('meta', attrs={'name': 'description'})
-                description = description_tag['content'].strip() if description_tag else ''
+            # Извлекаем данные
+            h1 = soup.h1.text.strip() if soup.h1 else None
+            title = soup.title.text.strip() if soup.title else None
+            description_tag = soup.find('meta', attrs={'name': 'description'})
+            description = description_tag['content'].strip() if description_tag else None
 
-                # Сохраняем проверку
-                cur.execute('''
-                    INSERT INTO url_checks (
-                        url_id, 
-                        status_code,
-                        h1,
-                        title,
-                        description,
-                        created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (
+            # Вставляем проверку
+            cur.execute('''
+                INSERT INTO url_checks (
                     url_id,
-                    response.status_code,
-                    h1[:255],  # Ограничение длины как в базе
-                    title[:255],
-                    description[:255],
-                    datetime.now()
-                ))
-                conn.commit()
-                flash('Страница успешно проверена', 'success')
-                session['last_check_message'] = ('Страница успешно проверена', 'success')
+                    status_code,
+                    h1,
+                    title,
+                    description,
+                    created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                url_id,
+                response.status_code,
+                h1[:255] if h1 else None,
+                title[:255] if title else None,
+                description[:255] if description else None,
+                datetime.now()
+            ))
+            conn.commit()
+            flash('Страница успешно проверена', 'success')
 
-            except requests.exceptions.RequestException:
-                session['last_check_message'] = ('Произошла ошибка при проверке', 'danger')
-                return redirect(url_for('url_detail', id=id))
-
-            except Exception as e:
-                session['last_check_message'] = (f'Ошибка: {str(e)}', 'danger')
-
-    except psycopg2.Error as e:
+    except Exception as e:
         conn.rollback()
-        flash('Ошибка при сохранении проверки', 'danger')
-        app.logger.error(f'Database error: {e}')
+        flash(f'Ошибка: {str(e)}', 'danger')
+        app.logger.error(f'Ошибка проверки: {str(e)}')
     finally:
         conn.close()
 

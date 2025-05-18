@@ -11,7 +11,7 @@
   </div>
 
   <h2 class="mt-4">Проверки</h2>
-  <table class="table table-bordered table-hover" data-test="checks">
+  <table class="table table-bordered table-hover">
     <thead class="table-light">
       <tr>
         <th>ID</th>
@@ -25,12 +25,12 @@
     <tbody>
       {% for check in checks %}
         <tr>
-          <td>{{ check[0] }}</td> <!-- ID проверки -->
-          <td>{{ check[2] }}</td> <!-- status_code -->
-          <td>{{ check[3] | truncate(30) if check[3] }}</td> <!-- h1 -->
-          <td>{{ check[4] | truncate(30) if check[4] }}</td> <!-- title -->
-          <td>{{ check[5] | truncate(50) if check[5] }}</td> <!-- description -->
-          <td>{{ check[6].strftime('%Y-%m-%d %H:%M') }}</td> <!-- created_at -->
+          <td>{{ check[0] }}</td>
+          <td>{{ check[2] }}</td>
+          <td>{{ check[3] | default('', true) }}</td>
+          <td>{{ check[4] | default('', true) }}</td>
+          <td>{{ check[5] | default('', true) }}</td>
+          <td>{{ check[6].strftime('%Y-%m-%d %H:%M') }}</td>
         </tr>
       {% else %}
         <tr>
