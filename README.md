@@ -57,5 +57,5 @@ make build
 ````
 start:
 ````
-render start
+make render start
 ````
