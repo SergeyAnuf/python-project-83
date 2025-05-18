@@ -149,7 +149,7 @@ def url_check(id):
             try:
                 response = requests.get(url_name, timeout=10)
                 response.raise_for_status()
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 flash('Произошла ошибка при проверке', 'danger')
                 return redirect(url_for('url_detail', id=url_id))
 
@@ -159,7 +159,11 @@ def url_check(id):
             h1 = soup.h1.text.strip() if soup.h1 else None
             title = soup.title.text.strip() if soup.title else None
             description_tag = soup.find('meta', attrs={'name': 'description'})
-            description = description_tag['content'].strip() if description_tag else None
+            description = (
+                description_tag['content'].strip()
+                if description_tag
+                else None
+            )
 
             # Вставляем проверку
             cur.execute('''
