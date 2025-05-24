@@ -1,9 +1,0 @@
-setuptools==80.4.0
-validators==0.35.0
-beautifulsoup4>=4.13.3
-flask>=3.1.0
-gunicorn>=23.0.0
-lxml>=5.3.1
-psycopg2-binary>=2.9.10
-python-dotenv>=1.0.1
-requests>=2.32.3
