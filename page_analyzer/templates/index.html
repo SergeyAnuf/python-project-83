@@ -13,9 +13,6 @@
         {% if errors %}
           <div class="alert alert-danger mt-2">{{ errors }}</div>
         {% endif %}
-        {% for category, message in get_flashed_messages(with_categories=True) %}
-          <div class="alert alert-{{ category }} mt-2">{{ message }}</div>
-        {% endfor %}
       </form>
     </div>
   </div>
