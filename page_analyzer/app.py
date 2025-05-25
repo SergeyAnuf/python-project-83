@@ -114,8 +114,12 @@ def add_url():
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;',
+            cur.execute('''
+            INSERT INTO
+            urls (name, created_at)
+            VALUES (%s, %s)
+            RETURNING id;
+            ''',
                 (normalized_url, datetime.now())
             )
             url_id = cur.fetchone()[0]
@@ -125,7 +129,12 @@ def add_url():
     except psycopg2.IntegrityError:
         conn.rollback()
         with conn.cursor() as cur:
-            cur.execute('SELECT id FROM urls WHERE name = %s;', (normalized_url,))
+            cur.execute('''
+            SELECT id
+            FROM urls
+            WHERE name = %s;
+            ''',
+                (normalized_url,))
             url_id = cur.fetchone()[0]
         flash('Страница уже существует', 'info')
         return redirect(url_for('url_detail', id=url_id))
