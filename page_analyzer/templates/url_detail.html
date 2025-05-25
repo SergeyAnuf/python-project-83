@@ -20,34 +20,30 @@
   </div>
 
   <h2 class="mt-4">Проверки</h2>
-  <table class="table table-bordered table-hover">
-    <thead class="table-light">
+  <table class="table table-bordered table-hover" data-test="checks">
+  <thead class="table-light">
+    <tr>
+      <th>ID</th>
+      <th>Код ответа</th> <!-- Добавляем data-test атрибут -->
+      <th>h1</th>
+      <th>title</th>
+      <th>description</th>
+      <th>Дата проверки</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for check in checks %}
       <tr>
-        <th>ID</th>
-        <th>Код ответа</th>
-        <th>h1</th>
-        <th>title</th>
-        <th>description</th>
-        <th>Дата проверки</th>
+        <td>{{ check[0] }}</td>
+        <td data-test="status-code">{{ check[2] }}</td>
+        <td>{{ check[3] | default('', true) }}</td>
+        <td>{{ check[4] | default('', true) }}</td>
+        <td>{{ check[5] | default('', true) }}</td>
+        <td>{{ check[6].strftime('%Y-%m-%d %H:%M') }}</td>
       </tr>
-    </thead>
-    <tbody>
-      {% for check in checks %}
-        <tr>
-          <td>{{ check[0] }}</td>
-          <td>{{ check[2] }}</td>
-          <td>{{ check[3] | default('', true) }}</td>
-          <td>{{ check[4] | default('', true) }}</td>
-          <td>{{ check[5] | default('', true) }}</td>
-          <td>{{ check[6].strftime('%Y-%m-%d %H:%M') }}</td>
-        </tr>
-      {% else %}
-        <tr>
-          <td colspan="6" class="text-center">Проверок пока нет</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    {% endfor %}
+  </tbody>
+</table>
 </div>
 {% endblock %}
 

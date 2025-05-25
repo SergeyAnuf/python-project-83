@@ -147,25 +147,18 @@ def url_check(id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # Получаем URL из базы
-            cur.execute('SELECT id, name FROM urls WHERE id = %s', (id,))
-            url_data = cur.fetchone()
-            if not url_data:
-                flash('Сайт не найден', 'danger')
-                return redirect(url_for('urls'))
-
-            url_id, url_name = url_data
+            cur.execute('SELECT name FROM urls WHERE id = %s', (id,))
+            url_name = cur.fetchone()[0]
 
             try:
                 response = requests.get(url_name, timeout=10)
                 response.raise_for_status()
-            except requests.exceptions.RequestException:
-                flash('Произошла ошибка при проверке', 'danger')
-                return redirect(url_for('url_detail', id=url_id))
+            except requests.exceptions.RequestException as e:
+                flash(f'Произошла ошибка при проверке: {str(e)}', 'danger')
+                return redirect(url_for('url_detail', id=id))
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Извлекаем данные
             h1 = soup.h1.text.strip() if soup.h1 else None
             title = soup.title.text.strip() if soup.title else None
             description_tag = soup.find('meta', attrs={'name': 'description'})
@@ -175,7 +168,6 @@ def url_check(id):
                 else None
             )
 
-            # Вставляем проверку
             cur.execute('''
                 INSERT INTO url_checks (
                     url_id,
@@ -186,7 +178,7 @@ def url_check(id):
                     created_at
                 ) VALUES (%s, %s, %s, %s, %s, %s)
             ''', (
-                url_id,
+                id,
                 response.status_code,
                 h1[:255] if h1 else None,
                 title[:255] if title else None,
@@ -197,7 +189,12 @@ def url_check(id):
             flash('Страница успешно проверена', 'success')
 
     except Exception as e:
+        conn.rollback()
         flash(f'Произошла ошибка при проверке: {str(e)}', 'danger')
+        app.logger.error(f'Ошибка проверки: {str(e)}')
+    finally:
+        conn.close()
+
     return redirect(url_for('url_detail', id=id))
 
 
