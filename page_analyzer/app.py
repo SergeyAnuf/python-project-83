@@ -103,9 +103,10 @@ def url_detail(id):
 def add_url():
     raw_url = request.form.get('url', '').strip()
     error = validate_url(raw_url)
+
     if error:
-        flash(error, 'danger')
-        return render_template('index.html', url=raw_url), 422
+        flash(error, 'danger')  # Только flash, без передачи errors
+        return render_template('index.html'), 422
 
     parsed_url = urlparse(raw_url)
     normalized_url = f'{parsed_url.scheme}://{parsed_url.netloc}'
@@ -119,14 +120,14 @@ def add_url():
             )
             url_id = cur.fetchone()[0]
             conn.commit()
-            flash('Страница успешно добавлена', 'success')  # Исправленное сообщение
+            flash('Страница успешно добавлена', 'success')
             return redirect(url_for('url_detail', id=url_id))
     except psycopg2.IntegrityError:
         conn.rollback()
         with conn.cursor() as cur:
             cur.execute('SELECT id FROM urls WHERE name = %s;', (normalized_url,))
             url_id = cur.fetchone()[0]
-        flash('Страница уже существует', 'info')  # Исправленное сообщение
+        flash('Страница уже существует', 'info')
         return redirect(url_for('url_detail', id=url_id))
     finally:
         conn.close()
@@ -187,12 +188,7 @@ def url_check(id):
             flash('Страница успешно проверена', 'success')
 
     except Exception as e:
-        conn.rollback()
-        flash(f'Ошибка: {str(e)}', 'danger')
-        app.logger.error(f'Ошибка проверки: {str(e)}')
-    finally:
-        conn.close()
-
+        flash(f'Произошла ошибка при проверке: {str(e)}', 'danger')
     return redirect(url_for('url_detail', id=id))
 
 
