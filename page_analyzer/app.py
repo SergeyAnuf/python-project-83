@@ -102,7 +102,7 @@ def url_detail(id):
 @app.route('/urls', methods=['POST'])
 def add_url():
     raw_url = request.form.get('url', '').strip()
-    error = validate_url(raw_url)  # Изменено на error вместо errors
+    error = validate_url(raw_url)
     if error:
         flash(error, 'danger')
         return render_template('index.html', url=raw_url), 422
@@ -111,24 +111,24 @@ def add_url():
     normalized_url = f'{parsed_url.scheme}://{parsed_url.netloc}'
 
     conn = get_db()
-    cur = conn.cursor()
     try:
-        cur.execute(
-            'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;',
-            (normalized_url, datetime.now())
-        )
-        url_id = cur.fetchone()[0]
-        conn.commit()
-        flash('Сайт успешно добавлен', 'success')
-        return redirect(url_for('url_detail', id=url_id))
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id;',
+                (normalized_url, datetime.now())
+            )
+            url_id = cur.fetchone()[0]
+            conn.commit()
+            flash('Страница успешно добавлена', 'success')  # Исправленное сообщение
+            return redirect(url_for('url_detail', id=url_id))
     except psycopg2.IntegrityError:
         conn.rollback()
-        cur.execute('SELECT id FROM urls WHERE name = %s;', (normalized_url,))
-        url_id = cur.fetchone()[0]
-        flash('Страница уже существует', 'info')
+        with conn.cursor() as cur:
+            cur.execute('SELECT id FROM urls WHERE name = %s;', (normalized_url,))
+            url_id = cur.fetchone()[0]
+        flash('Страница уже существует', 'info')  # Исправленное сообщение
         return redirect(url_for('url_detail', id=url_id))
     finally:
-        cur.close()
         conn.close()
 
 
