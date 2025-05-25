@@ -8,7 +8,7 @@
       <form action="{{ url_for('add_url') }}" method="post">
         <div class="input-group">
           <input type="text" class="form-control" name="url" placeholder="https://example.com" value="{{ url or '' }}">
-          <button type="submit" class="btn btn-primary">Добавить</button>
+          <input type="submit" value="Добавить"</input>
         </div>
         {% if errors %}
           <div class="alert alert-danger mt-2">{{ errors }}</div>
