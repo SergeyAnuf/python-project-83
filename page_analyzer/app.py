@@ -31,8 +31,10 @@ def get_db():
 
 @app.route('/')
 def index():
-    # Извлекаем и удаляем сообщение из сессии
-    message_data = session.pop('last_check_message', None)
+    try:
+        message_data = session.pop('last_check_message', None)
+    except RuntimeError:
+        message_data = None
     if message_data:
         flash(message_data[0], message_data[1])
     return render_template('index.html')
