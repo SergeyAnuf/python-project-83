@@ -158,10 +158,12 @@ def url_check(id):
 
             try:
                 # Уменьшаем таймаут до 5 секунд и добавляем проверку доступности
-                response = requests.get(url_name, timeout=5, allow_redirects=True)
+                response = requests.get(url_name,
+                                        timeout=5,
+                                        allow_redirects=True)
                 response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                flash(f'Произошла ошибка при проверке', 'danger')
+            except requests.exceptions.RequestException:
+                flash('Произошла ошибка при проверке', 'danger')
                 return redirect(url_for('url_detail', id=id))
 
             soup = BeautifulSoup(response.text, 'html.parser')
