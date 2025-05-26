@@ -148,13 +148,20 @@ def url_check(id):
     try:
         with conn.cursor() as cur:
             cur.execute('SELECT name FROM urls WHERE id = %s', (id,))
-            url_name = cur.fetchone()[0]
+            url_record = cur.fetchone()
+
+            if not url_record:
+                flash('Сайт не существует', 'danger')
+                return redirect(url_for('urls'))
+
+            url_name = url_record[0]
 
             try:
-                response = requests.get(url_name, timeout=10)
+                # Уменьшаем таймаут до 5 секунд и добавляем проверку доступности
+                response = requests.get(url_name, timeout=5, allow_redirects=True)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                flash(f'Произошла ошибка при проверке: {str(e)}', 'danger')
+                flash(f'Произошла ошибка при проверке', 'danger')
                 return redirect(url_for('url_detail', id=id))
 
             soup = BeautifulSoup(response.text, 'html.parser')
